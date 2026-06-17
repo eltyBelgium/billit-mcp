@@ -1,0 +1,76 @@
+{
+  "dxt_version": "0.1",
+  "name": "billit-mcp",
+  "display_name": "Billit",
+  "version": "0.1.0",
+  "description": "Belgian e-invoicing via Billit — create, send and manage invoices, credit notes, and Peppol documents.",
+  "long_description": "An MCP server for the Billit API. Lets the model list, create and send invoices and credit notes, manage customers and suppliers, upload supplier PDFs for OCR, look up Peppol participants, and more. Sandbox by default; production opt-in.",
+  "author": {
+    "name": "Elty",
+    "email": "tyas@elty.be",
+    "url": "https://github.com/elty"
+  },
+  "homepage": "https://github.com/elty/billit-mcp",
+  "documentation": "https://github.com/elty/billit-mcp/blob/main/docs/GUIDE.md",
+  "support": "https://github.com/elty/billit-mcp/issues",
+  "license": "MIT",
+  "keywords": ["billit", "invoice", "peppol", "e-invoicing", "accounting", "belgium"],
+  "icon": "icon.png",
+  "server": {
+    "type": "python",
+    "entry_point": "src/billit_mcp/__main__.py",
+    "mcp_config": {
+      "command": "python",
+      "args": [
+        "${__dirname}/src/billit_mcp/__main__.py",
+        "--transport",
+        "stdio"
+      ],
+      "env": {
+        "BILLIT_API_KEY": "${user_config.api_key}",
+        "BILLIT_PARTY_ID": "${user_config.party_id}",
+        "BILLIT_BASE_URL": "${user_config.base_url}",
+        "BILLIT_AUTH_MODE": "apikey",
+        "LOG_LEVEL": "${user_config.log_level}",
+        "PYTHONPATH": "${__dirname}/server/lib"
+      }
+    }
+  },
+  "user_config": {
+    "api_key": {
+      "type": "string",
+      "title": "Billit API key",
+      "description": "From my.billit.be (or my.sandbox.billit.be) → My Profile.",
+      "sensitive": true,
+      "required": true
+    },
+    "party_id": {
+      "type": "string",
+      "title": "Billit PartyID",
+      "description": "Integer ID of the Billit company you want to operate against. Find it next to your API key in MyBillit.",
+      "required": true
+    },
+    "base_url": {
+      "type": "string",
+      "title": "API base URL",
+      "description": "Sandbox by default. Set to https://api.billit.be only when you're ready for real invoices.",
+      "default": "https://api.sandbox.billit.be",
+      "required": false
+    },
+    "log_level": {
+      "type": "string",
+      "title": "Log level",
+      "description": "DEBUG | INFO | WARNING | ERROR. Logs are written to stderr and surface in Claude Desktop's MCP log file.",
+      "default": "INFO",
+      "required": false
+    }
+  },
+  "compatibility": {
+    "claude_desktop": ">=0.10.0",
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {
+      "python": ">=3.10"
+    }
+  },
+  "tools_generated": true
+}

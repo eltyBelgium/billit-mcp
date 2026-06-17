@@ -1,0 +1,67 @@
+[project]
+name = "billit-mcp"
+version = "0.1.0"
+description = "MCP server for Billit — Belgian e-invoicing & Peppol API. Works with Claude, Gemini and ChatGPT."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Elty", email = "tyas@elty.be" }]
+keywords = ["mcp", "model-context-protocol", "billit", "invoice", "peppol", "e-invoicing", "accounting", "belgium"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business :: Financial :: Accounting",
+]
+dependencies = [
+    "fastmcp>=2.3,<4.0",
+    "httpx[http2]>=0.27",
+    "pydantic>=2.6",
+    "pydantic-settings>=2.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.23",
+    "pytest-httpx>=0.30",
+    "ruff>=0.5",
+    "mypy>=1.10",
+]
+
+[project.scripts]
+billit-mcp = "billit_mcp.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/elty/billit-mcp"
+Documentation = "https://github.com/elty/billit-mcp/blob/main/docs/GUIDE.md"
+Issues = "https://github.com/elty/billit-mcp/issues"
+"Billit docs" = "https://docs.billit.be/"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/billit_mcp"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "ASYNC", "RUF"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+plugins = ["pydantic.mypy"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

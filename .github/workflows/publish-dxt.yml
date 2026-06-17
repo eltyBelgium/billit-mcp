@@ -1,0 +1,38 @@
+name: Publish DXT bundle
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # to upload release assets
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Bundle Python deps into dxt/server/lib
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --target=dxt/server/lib .
+          # Also copy the source tree so the manifest entry_point resolves.
+          mkdir -p dxt/src
+          cp -r src/billit_mcp dxt/src/
+
+      - name: Pack DXT
+        run: |
+          npx -y @anthropic-ai/dxt pack ./dxt billit-mcp.dxt
+
+      - name: Upload as release asset
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${{ github.event.release.tag_name }}" billit-mcp.dxt --clobber
