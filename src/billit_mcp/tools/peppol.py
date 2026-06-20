@@ -8,6 +8,7 @@ from fastmcp import FastMCP
 from pydantic import Field
 
 from ..client import BillitClient
+from ._common import as_result
 
 
 def register(mcp: FastMCP, client: BillitClient) -> None:
@@ -34,12 +35,12 @@ def register(mcp: FastMCP, client: BillitClient) -> None:
         Useful as a pre-flight check before attempting to send via Peppol —
         if the participant doesn't exist, the send will fail.
         """
-        return await client.get(f"peppol/participantInformation/{vat_or_cbe}")
+        return as_result(await client.get(f"peppol/participantInformation/{vat_or_cbe}"))
 
     @mcp.tool(annotations={"title": "List Peppol inbox", "readOnlyHint": True})
     async def list_peppol_inbox(party_id: str | None = None) -> dict[str, Any]:
         """Show inbound Peppol documents (returns first 10 items)."""
-        return await client.get("peppol/inbox", party_id=party_id)
+        return as_result(await client.get("peppol/inbox", party_id=party_id))
 
     @mcp.tool(
         annotations={
@@ -53,8 +54,8 @@ def register(mcp: FastMCP, client: BillitClient) -> None:
         party_id: str | None = None,
     ) -> dict[str, Any]:
         """Accept an inbound Peppol document into your Billit inbox."""
-        return await client.post(
-            f"peppol/inbox/{inbox_item_id}/confirm", party_id=party_id
+        return as_result(
+            await client.post(f"peppol/inbox/{inbox_item_id}/confirm", party_id=party_id)
         )
 
     @mcp.tool(
@@ -70,8 +71,8 @@ def register(mcp: FastMCP, client: BillitClient) -> None:
         party_id: str | None = None,
     ) -> dict[str, Any]:
         """Reject an inbound Peppol document."""
-        return await client.post(
-            f"peppol/inbox/{inbox_item_id}/refuse", party_id=party_id
+        return as_result(
+            await client.post(f"peppol/inbox/{inbox_item_id}/refuse", party_id=party_id)
         )
 
     @mcp.tool(
@@ -85,4 +86,4 @@ def register(mcp: FastMCP, client: BillitClient) -> None:
         party_id: str | None = None,
     ) -> dict[str, Any]:
         """Register the current company on the Peppol network."""
-        return await client.post("peppol/participants", party_id=party_id)
+        return as_result(await client.post("peppol/participants", party_id=party_id))

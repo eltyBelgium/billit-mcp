@@ -7,7 +7,8 @@ import asyncio
 import logging
 import sys
 
-from . import __version__, settings as settings_mod
+from . import __version__
+from . import settings as settings_mod
 from .server import build_server
 
 log = logging.getLogger(__name__)

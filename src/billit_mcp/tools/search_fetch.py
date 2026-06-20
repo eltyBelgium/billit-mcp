@@ -90,7 +90,7 @@ def register(mcp: FastMCP, client: BillitClient) -> None:
             "openWorldHint": True,
         }
     )
-    async def fetch(id: str) -> dict[str, Any]:  # noqa: A002 — name fixed by spec
+    async def fetch(id: str) -> dict[str, Any]:  # 'id' arg name is fixed by the ChatGPT Apps SDK spec
         """Fetch a single record by the ID returned from ``search``."""
         if id.startswith(_ORDER_PREFIX):
             oid = id[len(_ORDER_PREFIX) :]

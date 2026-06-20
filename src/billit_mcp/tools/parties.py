@@ -8,7 +8,7 @@ from fastmcp import FastMCP
 from pydantic import Field
 
 from ..client import BillitClient
-from ._common import drop_none, odata_params
+from ._common import as_result, drop_none, odata_params
 
 PartyType = Literal["Customer", "Supplier"]
 
@@ -98,8 +98,10 @@ def register(mcp: FastMCP, client: BillitClient) -> None:
                 "Addresses": addresses,
             }
         )
-        return await client.post(
-            "parties", json=body, party_id=party_id, idempotent_key=idempotent_key
+        return as_result(
+            await client.post(
+                "parties", json=body, party_id=party_id, idempotent_key=idempotent_key
+            )
         )
 
     @mcp.tool(
@@ -115,4 +117,6 @@ def register(mcp: FastMCP, client: BillitClient) -> None:
         party_id: str | None = None,
     ) -> dict[str, Any]:
         """PATCH a party. Pass only the fields you want to change."""
-        return await client.patch(f"parties/{target_party_id}", json=patch, party_id=party_id)
+        return as_result(
+            await client.patch(f"parties/{target_party_id}", json=patch, party_id=party_id)
+        )

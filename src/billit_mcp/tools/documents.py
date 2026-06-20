@@ -8,7 +8,7 @@ from fastmcp import FastMCP
 from pydantic import Field
 
 from ..client import BillitClient
-from ._common import drop_none, odata_params
+from ._common import as_result, drop_none, odata_params
 
 
 def register(mcp: FastMCP, client: BillitClient) -> None:
@@ -64,6 +64,8 @@ def register(mcp: FastMCP, client: BillitClient) -> None:
                 },
             }
         )
-        return await client.post(
-            "documents", json=body, party_id=party_id, idempotent_key=idempotent_key
+        return as_result(
+            await client.post(
+                "documents", json=body, party_id=party_id, idempotent_key=idempotent_key
+            )
         )

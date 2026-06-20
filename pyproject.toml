@@ -55,7 +55,10 @@ target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "ASYNC", "RUF"]
-ignore = ["E501"]
+# E501: long lines tolerated (line-length is a soft target).
+# ASYNC240: the optional local file write in download_file is a short,
+#   user-requested disk save — blocking pathlib is acceptable there.
+ignore = ["E501", "ASYNC240"]
 
 [tool.mypy]
 python_version = "3.10"

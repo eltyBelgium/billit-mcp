@@ -8,7 +8,7 @@ from fastmcp import FastMCP
 from pydantic import Field
 
 from ..client import BillitClient
-from ._common import drop_none
+from ._common import as_result, drop_none
 
 
 def register(mcp: FastMCP, client: BillitClient) -> None:
@@ -38,11 +38,13 @@ def register(mcp: FastMCP, client: BillitClient) -> None:
                 }
             }
         )
-        return await client.post(
-            "toProcess", json=body, party_id=party_id, idempotent_key=idempotent_key
+        return as_result(
+            await client.post(
+                "toProcess", json=body, party_id=party_id, idempotent_key=idempotent_key
+            )
         )
 
     @mcp.tool(annotations={"title": "List inbound queue", "readOnlyHint": True})
     async def list_inbound_queue(party_id: str | None = None) -> dict[str, Any]:
         """Show items currently in the OCR/inbound queue."""
-        return await client.get("toProcess", party_id=party_id)
+        return as_result(await client.get("toProcess", party_id=party_id))

@@ -13,7 +13,7 @@ from fastmcp import FastMCP
 from pydantic import Field
 
 from ..client import BillitClient
-from ._common import drop_none, odata_params
+from ._common import as_result, drop_none, odata_params, order_id_result
 
 OrderType = Literal["Invoice", "CreditNote", "Offer", "DeliveryNote", "OrderForm"]
 OrderDirection = Literal["Income", "Cost"]
@@ -156,8 +156,10 @@ def register(mcp: FastMCP, client: BillitClient) -> None:
                 "OrderPDF": order_pdf,
             }
         )
-        return await client.post(
-            "orders", json=body, party_id=party_id, idempotent_key=idempotent_key
+        return order_id_result(
+            await client.post(
+                "orders", json=body, party_id=party_id, idempotent_key=idempotent_key
+            )
         )
 
     @mcp.tool(
@@ -205,8 +207,10 @@ def register(mcp: FastMCP, client: BillitClient) -> None:
                 "Currency": currency,
             }
         )
-        return await client.post(
-            "orders", json=body, party_id=party_id, idempotent_key=idempotent_key
+        return order_id_result(
+            await client.post(
+                "orders", json=body, party_id=party_id, idempotent_key=idempotent_key
+            )
         )
 
     @mcp.tool(
@@ -238,8 +242,10 @@ def register(mcp: FastMCP, client: BillitClient) -> None:
                 "Currency": currency,
             }
         )
-        return await client.post(
-            "orders", json=body, party_id=party_id, idempotent_key=idempotent_key
+        return order_id_result(
+            await client.post(
+                "orders", json=body, party_id=party_id, idempotent_key=idempotent_key
+            )
         )
 
     # ---- mutate ----------------------------------------------------------
@@ -266,7 +272,9 @@ def register(mcp: FastMCP, client: BillitClient) -> None:
         party_id: str | None = None,
     ) -> dict[str, Any]:
         """PATCH an order. Use to cancel (set OrderStatus='Canceled'), edit dates, etc."""
-        return await client.patch(f"orders/{order_id}", json=patch, party_id=party_id)
+        return as_result(
+            await client.patch(f"orders/{order_id}", json=patch, party_id=party_id)
+        )
 
     @mcp.tool(
         annotations={
@@ -311,12 +319,14 @@ def register(mcp: FastMCP, client: BillitClient) -> None:
         """
         body = {"OrderIds": order_ids, "TransportType": transport_type}
         extra = {"StrictTransportType": "true"} if strict_transport_type else None
-        return await client.post(
-            "orders/commands/send",
-            json=body,
-            party_id=party_id,
-            idempotent_key=idempotent_key,
-            extra_headers=extra,
+        return as_result(
+            await client.post(
+                "orders/commands/send",
+                json=body,
+                party_id=party_id,
+                idempotent_key=idempotent_key,
+                extra_headers=extra,
+            )
         )
 
     @mcp.tool(
@@ -362,9 +372,11 @@ def register(mcp: FastMCP, client: BillitClient) -> None:
                 "Reference": reference,
             }
         )
-        return await client.post(
-            f"orders/{order_id}/payments",
-            json=body,
-            party_id=party_id,
-            idempotent_key=idempotent_key,
+        return as_result(
+            await client.post(
+                f"orders/{order_id}/payments",
+                json=body,
+                party_id=party_id,
+                idempotent_key=idempotent_key,
+            )
         )
