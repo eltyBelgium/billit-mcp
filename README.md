@@ -19,15 +19,25 @@ Pick the path that matches your client.
 
 ### One-click — Claude Desktop (recommended)
 
-Download `billit-mcp.dxt` from the [latest release](https://github.com/elty/billit-mcp/releases/latest)
+Download `billit-mcp.dxt` from the [latest release](https://github.com/eltyBelgium/billit-mcp/releases/latest)
 and **double-click**. Claude Desktop will install it and prompt you for your Billit
 API key and PartyID in a form. Done.
+
+> [!NOTE]
+> The DXT is a thin launcher that runs the server via `uvx`, so it works on
+> macOS/Windows/Linux from a single file. It requires [`uv`](https://docs.astral.sh/uv/)
+> to be installed (`curl -LsSf https://astral.sh/uv/install.sh | sh`).
 
 ### One command — Claude Code, Gemini CLI, IDEs
 
 ```bash
-uvx billit-mcp --help
+uvx billit-mcp-server --help
 ```
+
+> [!NOTE]
+> The PyPI release (`billit-mcp-server`) is pending. Until it lands, install from
+> source (see [Develop](#develop)) or use the `.dxt` bundle. The bare name
+> `billit-mcp` on PyPI is an unrelated project — don't install it.
 
 Then register it with your client (see [`docs/GUIDE.md`](docs/GUIDE.md) for exact
 config snippets).
@@ -37,7 +47,7 @@ config snippets).
 ```bash
 docker run --rm -p 8000:8000 \
   -e BILLIT_API_KEY=... -e BILLIT_PARTY_ID=12345 \
-  ghcr.io/elty/billit-mcp:latest
+  ghcr.io/eltybelgium/billit-mcp:latest
 ```
 
 Expose `https://your-host/mcp` publicly and register it as a custom connector in
@@ -66,7 +76,7 @@ ChatGPT (Developer Mode) or pass `server_url` to the OpenAI Responses API.
 ## Develop
 
 ```bash
-git clone https://github.com/elty/billit-mcp
+git clone https://github.com/eltyBelgium/billit-mcp
 cd billit-mcp
 uv sync --extra dev
 uv run pytest

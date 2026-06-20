@@ -1,5 +1,7 @@
 [project]
-name = "billit-mcp"
+# NOTE: the bare name "billit-mcp" is already taken on PyPI by an unrelated
+# project, so this distribution publishes as "billit-mcp-server".
+name = "billit-mcp-server"
 version = "0.1.0"
 description = "MCP server for Billit — Belgian e-invoicing & Peppol API. Works with Claude, Gemini and ChatGPT."
 readme = "README.md"
@@ -34,12 +36,13 @@ dev = [
 ]
 
 [project.scripts]
+billit-mcp-server = "billit_mcp.__main__:main"
 billit-mcp = "billit_mcp.__main__:main"
 
 [project.urls]
-Homepage = "https://github.com/elty/billit-mcp"
-Documentation = "https://github.com/elty/billit-mcp/blob/main/docs/GUIDE.md"
-Issues = "https://github.com/elty/billit-mcp/issues"
+Homepage = "https://github.com/eltyBelgium/billit-mcp"
+Documentation = "https://github.com/eltyBelgium/billit-mcp/blob/main/docs/GUIDE.md"
+Issues = "https://github.com/eltyBelgium/billit-mcp/issues"
 "Billit docs" = "https://docs.billit.be/"
 
 [build-system]

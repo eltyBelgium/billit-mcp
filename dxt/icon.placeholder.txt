@@ -1,3 +1,0 @@
-Placeholder for icon.png — replace this file with a 256×256 PNG before running
-`dxt pack`. Recommended: transparent background, the Billit "B" mark or a
-generic invoice glyph that renders in both light and dark themes.

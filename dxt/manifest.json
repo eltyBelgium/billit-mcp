@@ -1,6 +1,6 @@
 {
   "dxt_version": "0.1",
-  "name": "billit-mcp",
+  "name": "billit-mcp-server",
   "display_name": "Billit",
   "version": "0.1.0",
   "description": "Belgian e-invoicing via Billit — create, send and manage invoices, credit notes, and Peppol documents.",
@@ -8,21 +8,23 @@
   "author": {
     "name": "Elty",
     "email": "tyas@elty.be",
-    "url": "https://github.com/elty"
+    "url": "https://github.com/eltyBelgium"
   },
-  "homepage": "https://github.com/elty/billit-mcp",
-  "documentation": "https://github.com/elty/billit-mcp/blob/main/docs/GUIDE.md",
-  "support": "https://github.com/elty/billit-mcp/issues",
+  "homepage": "https://github.com/eltyBelgium/billit-mcp",
+  "documentation": "https://github.com/eltyBelgium/billit-mcp/blob/main/docs/GUIDE.md",
+  "support": "https://github.com/eltyBelgium/billit-mcp/issues",
   "license": "MIT",
   "keywords": ["billit", "invoice", "peppol", "e-invoicing", "accounting", "belgium"],
   "icon": "icon.png",
   "server": {
-    "type": "python",
-    "entry_point": "src/billit_mcp/__main__.py",
+    "type": "binary",
+    "entry_point": "uvx",
     "mcp_config": {
-      "command": "python",
+      "command": "uvx",
       "args": [
-        "${__dirname}/src/billit_mcp/__main__.py",
+        "--from",
+        "git+https://github.com/eltyBelgium/billit-mcp@v0.1.0",
+        "billit-mcp-server",
         "--transport",
         "stdio"
       ],
@@ -31,8 +33,7 @@
         "BILLIT_PARTY_ID": "${user_config.party_id}",
         "BILLIT_BASE_URL": "${user_config.base_url}",
         "BILLIT_AUTH_MODE": "apikey",
-        "LOG_LEVEL": "${user_config.log_level}",
-        "PYTHONPATH": "${__dirname}/server/lib"
+        "LOG_LEVEL": "${user_config.log_level}"
       }
     }
   },

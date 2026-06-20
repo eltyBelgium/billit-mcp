@@ -1,12 +1,21 @@
 name: Publish to PyPI
 
+# Manual-only for now. PyPI publishing needs a Trusted Publisher configured on
+# pypi.org for the `billit-mcp-server` project (Settings → Publishing), linked to
+# this repo + this workflow. Until that's set up, running this would fail, so it
+# is NOT wired to `release: published`. Once trusted publishing is configured,
+# either run it from the Actions tab or re-add the release trigger below:
+#
+#   on:
+#     release:
+#       types: [published]
 on:
-  release:
-    types: [published]
+  workflow_dispatch:
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+    environment: pypi
     permissions:
       id-token: write   # OIDC for trusted publishing
     steps:

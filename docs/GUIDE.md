@@ -60,24 +60,30 @@ You'll receive a `client_id` and `client_secret`. See
 
 ### One-click — Claude Desktop only
 
-Download `billit-mcp.dxt` from [Releases](https://github.com/elty/billit-mcp/releases/latest)
+Download `billit-mcp.dxt` from [Releases](https://github.com/eltyBelgium/billit-mcp/releases/latest)
 and double-click. Skip to [Claude Desktop (DXT)](#claude-desktop-one-click-dxt).
 
 ### One command — everything else
 
+> [!NOTE]
+> The PyPI package `billit-mcp-server` is not published yet. Until it is, install
+> from source (`git clone` + `uv run`, see [Develop in the README](../README.md#develop))
+> or use the `.dxt`. Do **not** `uvx billit-mcp` — that bare name is an unrelated
+> project on PyPI.
+
 ```bash
-uvx billit-mcp --help   # downloads & runs without polluting your global Python
+uvx billit-mcp-server --help   # downloads & runs without polluting your global Python
 # or, persistent install:
-pipx install billit-mcp
+pipx install billit-mcp-server
 ```
 
 ### Docker — for hosted HTTP
 
 ```bash
-docker pull ghcr.io/elty/billit-mcp:latest
+docker pull ghcr.io/eltybelgium/billit-mcp:latest
 docker run --rm -p 8000:8000 \
   -e BILLIT_API_KEY=... -e BILLIT_PARTY_ID=12345 \
-  ghcr.io/elty/billit-mcp:latest
+  ghcr.io/eltybelgium/billit-mcp:latest
 # → http://localhost:8000/mcp (Streamable HTTP)
 ```
 
@@ -87,10 +93,20 @@ docker run --rm -p 8000:8000 \
 
 ### Claude Desktop (one-click DXT)
 
+**Prerequisite:** [`uv`](https://docs.astral.sh/uv/) must be installed — the DXT
+launches the server with `uvx`. Install it with
+`curl -LsSf https://astral.sh/uv/install.sh | sh` (macOS/Linux) or
+`powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"`
+(Windows).
+
 1. Download `billit-mcp.dxt`.
 2. Double-click → Claude Desktop pops a form.
 3. Paste **API key** and **PartyID**. Leave **base URL** at sandbox.
 4. Click Install.
+
+The DXT is a thin, cross-platform launcher (it runs
+`uvx --from git+https://github.com/eltyBelgium/billit-mcp@v0.1.0 billit-mcp-server`),
+so the same file works on macOS, Windows, and Linux.
 
 The Billit tools appear under the 🔨 icon in any chat. To toggle to production
 later, open **Settings → Connectors → Billit** and edit the form.
@@ -107,7 +123,7 @@ Path:
   "mcpServers": {
     "billit": {
       "command": "uvx",
-      "args": ["billit-mcp"],
+      "args": ["billit-mcp-server"],
       "env": {
         "BILLIT_API_KEY": "sk_...",
         "BILLIT_PARTY_ID": "12345",
@@ -129,7 +145,7 @@ claude mcp add --transport stdio \
   --env BILLIT_API_KEY=sk_... \
   --env BILLIT_PARTY_ID=12345 \
   --env BILLIT_BASE_URL=https://api.sandbox.billit.be \
-  billit -- uvx billit-mcp
+  billit -- uvx billit-mcp-server
 ```
 
 Or check `.mcp.json` into git so teammates get it for free:
@@ -140,7 +156,7 @@ Or check `.mcp.json` into git so teammates get it for free:
     "billit": {
       "type": "stdio",
       "command": "uvx",
-      "args": ["billit-mcp"],
+      "args": ["billit-mcp-server"],
       "env": {
         "BILLIT_API_KEY": "${BILLIT_API_KEY}",
         "BILLIT_PARTY_ID": "${BILLIT_PARTY_ID:-12345}",
@@ -160,7 +176,7 @@ Path: `~/.gemini/settings.json` (global) or `.gemini/settings.json` in a project
   "mcpServers": {
     "billit": {
       "command": "uvx",
-      "args": ["billit-mcp"],
+      "args": ["billit-mcp-server"],
       "env": {
         "BILLIT_API_KEY": "$BILLIT_API_KEY",
         "BILLIT_PARTY_ID": "12345",
@@ -195,7 +211,7 @@ process. Two paths:
 ```bash
 # Terminal 1 — start the server in HTTP mode
 BILLIT_API_KEY=... BILLIT_PARTY_ID=12345 \
-  uvx billit-mcp --transport http --port 8000
+  uvx billit-mcp-server --transport http --port 8000
 
 # Terminal 2 — expose it publicly
 cloudflared tunnel --url http://localhost:8000
@@ -207,7 +223,7 @@ cloudflared tunnel --url http://localhost:8000
 ```bash
 docker run -d --restart unless-stopped -p 8000:8000 \
   -e BILLIT_API_KEY=... -e BILLIT_PARTY_ID=12345 \
-  --name billit-mcp ghcr.io/elty/billit-mcp:latest
+  --name billit-mcp ghcr.io/eltybelgium/billit-mcp:latest
 # Front with a TLS-terminating reverse proxy (Caddy / nginx / Traefik).
 ```
 
@@ -313,7 +329,7 @@ at INFO level; persist it in your secret store.
 
 ```bash
 npx -y @modelcontextprotocol/inspector \
-  uvx billit-mcp
+  uvx billit-mcp-server
 ```
 
 A browser opens at <http://localhost:6274>. Try:
