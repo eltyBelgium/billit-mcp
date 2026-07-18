@@ -7,8 +7,7 @@ Source assets for the one-click `.dxt` installer for **Claude Desktop**.
 The DXT is a **self-contained Node bundle**. At release time, esbuild compiles
 `src/stdio.ts` and its pure-JS dependencies into a single `server/index.js`;
 Claude Desktop runs it with its **own bundled Node runtime**, so users install
-nothing — no Node, no Python, no uv. Works on macOS, Windows, and Linux from
-one file.
+nothing at all. Works on macOS, Windows, and Linux from one file.
 
 When a user double-clicks `billit-mcp.dxt`, Claude Desktop renders the
 `user_config` block from `manifest.json` as a form (API key, PartyID, base

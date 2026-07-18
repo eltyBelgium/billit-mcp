@@ -204,38 +204,45 @@ The `search`/`fetch` tools ChatGPT expects for Deep Research ship built-in.
 
 ### OpenAI Responses API
 
-```python
-resp = client.responses.create(
-    model="gpt-5",
-    input="What invoices are unpaid past their due date?",
-    tools=[{
-        "type": "mcp",
-        "server_label": "billit",
-        "server_url": "https://billit-mcp.<subdomain>.workers.dev/mcp",
-        "authorization": "Bearer <MCP_AUTH_TOKEN>",   # only if you set the gate
-        "require_approval": "never",
-    }],
-)
+```js
+import OpenAI from "openai";
+
+const client = new OpenAI();
+const resp = await client.responses.create({
+  model: "gpt-5",
+  input: "What invoices are unpaid past their due date?",
+  tools: [{
+    type: "mcp",
+    server_label: "billit",
+    server_url: "https://billit-mcp.<subdomain>.workers.dev/mcp",
+    authorization: "Bearer <MCP_AUTH_TOKEN>",   // only if you set the gate
+    require_approval: "never",
+  }],
+});
+console.log(resp.output_text);
 ```
 
 ### Anthropic Messages API (MCP connector)
 
-```python
-resp = client.messages.create(
-    model="claude-opus-4-8",
-    max_tokens=1024,
-    extra_headers={"anthropic-beta": "mcp-client-2025-11-20"},
-    messages=[{"role": "user", "content": "Send invoice 4321 via Peppol."}],
-    extra_body={
-        "mcp_servers": [{
-            "type": "url",
-            "url": "https://billit-mcp.<subdomain>.workers.dev/mcp",
-            "name": "billit",
-        }],
-        "tools": [{"type": "mcp_toolset", "mcp_server_name": "billit",
-                   "default_config": {"enabled": True}}],
-    },
-)
+```js
+import Anthropic from "@anthropic-ai/sdk";
+
+const client = new Anthropic();
+const resp = await client.messages.create(
+  {
+    model: "claude-opus-4-8",
+    max_tokens: 1024,
+    messages: [{ role: "user", content: "Send invoice 4321 via Peppol." }],
+    mcp_servers: [{
+      type: "url",
+      url: "https://billit-mcp.<subdomain>.workers.dev/mcp",
+      name: "billit",
+    }],
+    tools: [{ type: "mcp_toolset", mcp_server_name: "billit",
+              default_config: { enabled: true } }],
+  },
+  { headers: { "anthropic-beta": "mcp-client-2025-11-20" } },
+);
 ```
 
 Available on the Anthropic API and AWS Foundry — not Bedrock or Vertex.

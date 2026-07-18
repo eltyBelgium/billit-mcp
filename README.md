@@ -130,15 +130,15 @@ pair ChatGPT expects for Deep Research.
 
 ### OpenAI Responses API / Anthropic Messages API
 
-```python
-# OpenAI
-tools=[{"type": "mcp", "server_label": "billit",
-        "server_url": "https://billit-mcp.<sub>.workers.dev/mcp",
-        "require_approval": "never"}]
+```js
+// OpenAI
+tools: [{ type: "mcp", server_label: "billit",
+          server_url: "https://billit-mcp.<sub>.workers.dev/mcp",
+          require_approval: "never" }]
 
-# Anthropic (header: anthropic-beta: mcp-client-2025-11-20)
-mcp_servers=[{"type": "url", "name": "billit",
-              "url": "https://billit-mcp.<sub>.workers.dev/mcp"}]
+// Anthropic (header: anthropic-beta: mcp-client-2025-11-20)
+mcp_servers: [{ type: "url", name: "billit",
+                url: "https://billit-mcp.<sub>.workers.dev/mcp" }]
 ```
 
 ## Deploying & publishing your own instance
