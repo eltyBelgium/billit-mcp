@@ -16,6 +16,10 @@ dist/
 *.dxt
 dxt/bundle/
 
+# Stray Python artefacts (repo is TypeScript-only)
+__pycache__/
+*.pyc
+
 # OS / IDE
 .DS_Store
 .idea/
