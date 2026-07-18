@@ -1,0 +1,9 @@
+# GitHub renders the "Sponsor" button on the repo from this file.
+# The github: entry goes live once the account is enrolled at
+# https://github.com/sponsors (bank + tax setup via Stripe).
+github: [eltyBelgium]
+
+# Optional extra channels — uncomment when/if you set them up:
+# ko_fi: eltybelgium
+# buy_me_a_coffee: eltybelgium
+# custom: ["https://www.elty.be"]

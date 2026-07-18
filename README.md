@@ -3,6 +3,7 @@
 [![CI](https://github.com/eltyBelgium/billit-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/eltyBelgium/billit-mcp/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![MCP](https://img.shields.io/badge/protocol-MCP-8A2BE2)](https://modelcontextprotocol.io)
+[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-EA4AAA?logo=githubsponsors)](https://github.com/sponsors/eltyBelgium)
 
 A [Model Context Protocol](https://modelcontextprotocol.io) server for
 [Billit](https://www.billit.be/) — the Belgian e-invoicing and Peppol platform.
@@ -217,6 +218,12 @@ cd node && cp .dev.vars.example .dev.vars && npm run dev          # :8787/mcp
 - [Billit API docs](https://docs.billit.be/) · [Swagger](https://api.billit.be/swagger/ui/index)
 - [Model Context Protocol](https://modelcontextprotocol.io)
 - [Cloudflare Agents SDK — MCP](https://developers.cloudflare.com/agents/model-context-protocol/)
+
+## Support this project
+
+If this server saves you time, consider
+[**sponsoring on GitHub**](https://github.com/sponsors/eltyBelgium) ❤ —
+sponsorship funds maintenance, Billit API-change tracking, and new tools.
 
 ## License
 
