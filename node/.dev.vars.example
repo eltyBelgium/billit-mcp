@@ -1,0 +1,6 @@
+# Copy to `.dev.vars` for local `wrangler dev`. Never commit `.dev.vars`.
+# For production secrets use: wrangler secret put BILLIT_API_KEY
+BILLIT_API_KEY=your-billit-api-key
+BILLIT_PARTY_ID=12345
+BILLIT_BASE_URL=https://api.sandbox.billit.be
+BILLIT_AUTH_MODE=apikey

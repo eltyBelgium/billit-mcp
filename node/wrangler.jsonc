@@ -1,0 +1,20 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "billit-mcp",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-01-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  // Secrets (set with `wrangler secret put <NAME>`), NOT committed:
+  //   BILLIT_API_KEY, BILLIT_PARTY_ID
+  // Non-secret config can live here as plain vars. Sandbox is the default;
+  // set BILLIT_BASE_URL to https://api.billit.be only when you mean production.
+  "vars": {
+    "BILLIT_BASE_URL": "https://api.sandbox.billit.be",
+    "BILLIT_AUTH_MODE": "apikey"
+  }
+  // This is a STATELESS MCP server (createMcpHandler) — no Durable Objects,
+  // no migrations, no KV. That's what makes the deploy one command.
+}

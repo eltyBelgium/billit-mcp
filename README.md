@@ -13,6 +13,16 @@ Code Assist), and **ChatGPT** (Desktop Developer Mode, Responses API).
 - Sandbox by default. Explicit opt-in to production.
 - ChatGPT Apps SDK-compatible `search` and `fetch` tools for Deep Research.
 
+## Two implementations
+
+| | Where it runs | Best for |
+|---|---|---|
+| **Python** (this directory) | stdio + self-hosted HTTP (Docker) | uvx/pipx users, DXT bundle |
+| **[Node/TypeScript](node/)** | stdio + **Cloudflare Workers** | one-command cloud deploy (`wrangler deploy`), claude.ai/ChatGPT remote connectors |
+
+Same tool surface in both. For the easiest *remote* setup (no server to
+manage), use the Node version on Workers — see [`node/README.md`](node/README.md).
+
 ## Install
 
 Pick the path that matches your client.

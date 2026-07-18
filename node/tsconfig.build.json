@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "comment": "npm build: compile the stdio server + shared core. worker.ts is bundled by wrangler, not shipped in dist.",
+  "exclude": ["src/worker.ts"]
+}
