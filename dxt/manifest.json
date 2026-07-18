@@ -2,9 +2,9 @@
   "dxt_version": "0.1",
   "name": "billit-mcp-server",
   "display_name": "Billit",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Belgian e-invoicing via Billit — create, send and manage invoices, credit notes, and Peppol documents.",
-  "long_description": "An MCP server for the Billit API. Lets the model list, create and send invoices and credit notes, manage customers and suppliers, upload supplier PDFs for OCR, look up Peppol participants, and more. Sandbox by default; production opt-in.",
+  "long_description": "An MCP server for the Billit API. Lets the model list, create and send invoices and credit notes, manage customers and suppliers, upload supplier PDFs for OCR, look up Peppol participants, and more. Sandbox by default; production opt-in. Self-contained Node bundle — nothing else to install.",
   "author": {
     "name": "Elty",
     "email": "tyas@elty.be",
@@ -17,23 +17,17 @@
   "keywords": ["billit", "invoice", "peppol", "e-invoicing", "accounting", "belgium"],
   "icon": "icon.png",
   "server": {
-    "type": "binary",
-    "entry_point": "uvx",
+    "type": "node",
+    "entry_point": "server/index.js",
     "mcp_config": {
-      "command": "uvx",
-      "args": [
-        "--from",
-        "git+https://github.com/eltyBelgium/billit-mcp@v0.1.0",
-        "billit-mcp-server",
-        "--transport",
-        "stdio"
-      ],
+      "command": "node",
+      "args": ["${__dirname}/server/index.js"],
       "env": {
         "BILLIT_API_KEY": "${user_config.api_key}",
         "BILLIT_PARTY_ID": "${user_config.party_id}",
         "BILLIT_BASE_URL": "${user_config.base_url}",
         "BILLIT_AUTH_MODE": "apikey",
-        "LOG_LEVEL": "${user_config.log_level}"
+        "BILLIT_ALLOW_PRODUCTION": "${user_config.allow_production}"
       }
     }
   },
@@ -58,20 +52,17 @@
       "default": "https://api.sandbox.billit.be",
       "required": false
     },
-    "log_level": {
-      "type": "string",
-      "title": "Log level",
-      "description": "DEBUG | INFO | WARNING | ERROR. Logs are written to stderr and surface in Claude Desktop's MCP log file.",
-      "default": "INFO",
+    "allow_production": {
+      "type": "boolean",
+      "title": "Allow production",
+      "description": "Safety switch — must be enabled for the server to start against https://api.billit.be (real invoices).",
+      "default": false,
       "required": false
     }
   },
   "compatibility": {
     "claude_desktop": ">=0.10.0",
-    "platforms": ["darwin", "win32", "linux"],
-    "runtimes": {
-      "python": ">=3.10"
-    }
+    "platforms": ["darwin", "win32", "linux"]
   },
   "tools_generated": true
 }

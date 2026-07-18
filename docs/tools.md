@@ -49,7 +49,7 @@ workflows.
 
 | Tool | Purpose | Read-only |
 |---|---|---|
-| `download_file` | Download by UUID. Returns base64 or saves to disk if `save_to` provided | ✅ |
+| `download_file` | Download by UUID. Returns base64 + content type + size | ✅ |
 
 ## Reports
 

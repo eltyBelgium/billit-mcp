@@ -16,12 +16,19 @@ plain language.
  Then send it via Peppol."
 ```
 
+TypeScript, one codebase, two ways to run:
+
+- **Cloudflare Worker** — a remote Streamable-HTTP endpoint at `/mcp` for
+  claude.ai, ChatGPT, and the OpenAI/Anthropic APIs. Stateless; deploys in
+  one command on the free tier.
+- **stdio** — a local process for Claude Desktop, Claude Code, and Gemini CLI.
+
 ## ⚡ One-click deploy
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/eltyBelgium/billit-mcp/tree/main/node)
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/eltyBelgium/billit-mcp)
 
-This deploys the Worker to **your** Cloudflare account (free tier is fine).
-After it's live, add your Billit credentials:
+This deploys the Worker to **your** Cloudflare account. After it's live, add
+your Billit credentials:
 
 ```bash
 npx wrangler secret put BILLIT_API_KEY    # from my.sandbox.billit.be → My Profile
@@ -29,8 +36,7 @@ npx wrangler secret put BILLIT_PARTY_ID
 ```
 
 Your MCP endpoint: `https://billit-mcp.<your-subdomain>.workers.dev/mcp` —
-`GET /` shows a health/config status. Then connect it to your AI client
-([see below](#connect-your-ai-client)).
+`GET /` shows a health/config status.
 
 ## Features
 
@@ -48,17 +54,12 @@ Your MCP endpoint: `https://billit-mcp.<your-subdomain>.workers.dev/mcp` —
   | ChatGPT compat | `search` + `fetch` with the Apps SDK / Deep Research shape |
 
 - **Sandbox by default** — production requires an explicit opt-in
-  (`--allow-production` locally; deliberate config on the Worker).
+  (`--allow-production` / `BILLIT_ALLOW_PRODUCTION=true` locally; deliberate
+  config on the Worker).
 - **Idempotent writes** — every create/send call carries an `Idempotent-Key`,
   so retries never duplicate an invoice.
-- **Tool annotations** — reads are marked read-only, deletes destructive, so
-  clients can auto-approve safely and prompt on writes.
-- **Two implementations, one tool surface**:
-
-  | | Runs as | Best for |
-  |---|---|---|
-  | [`node/`](node/) (TypeScript) | stdio **or** Cloudflare Worker | remote connectors (claude.ai, ChatGPT), one-command cloud deploy |
-  | [`src/`](src/billit_mcp/) (Python) | stdio **or** self-hosted HTTP (Docker) | `uvx`/`pipx` users, Claude Desktop DXT bundle |
+- **Tool annotations** — reads marked read-only, deletes destructive, so
+  clients auto-approve safely and prompt on writes.
 
 ## Get Billit credentials
 
@@ -73,7 +74,7 @@ Your MCP endpoint: `https://billit-mcp.<your-subdomain>.workers.dev/mcp` —
 > Billit's terms allow API-key auth for **personal, non-commercial use only**.
 > If you distribute or host this for other users, Billit requires OAuth —
 > email `support@billit.eu` for a client ID/secret. See
-> [`docs/GUIDE.md`](docs/GUIDE.md#4-oauth-mode-multi-tenant--commercial).
+> [`docs/GUIDE.md`](docs/GUIDE.md).
 
 ## Connect your AI client
 
@@ -85,24 +86,24 @@ The short version:
 Settings → **Connectors** → **Add custom connector** →
 `https://billit-mcp.<your-subdomain>.workers.dev/mcp`
 
+### Claude Desktop (one-click DXT, local)
+
+Download `billit-mcp.dxt` from the
+[latest release](https://github.com/eltyBelgium/billit-mcp/releases/latest) and
+double-click — Claude Desktop prompts for your credentials in a form. The
+bundle is self-contained: nothing else to install.
+
 ### Claude Code
 
 ```bash
 # Remote (Worker):
 claude mcp add --transport http billit https://billit-mcp.<your-subdomain>.workers.dev/mcp
 
-# Or local (stdio, after `cd node && npm install && npm run build`):
+# Or local (stdio), after `npm install && npm run build`:
 claude mcp add --transport stdio \
   --env BILLIT_API_KEY=sk_... --env BILLIT_PARTY_ID=12345 \
-  billit -- node /path/to/billit-mcp/node/dist/stdio.js
+  billit -- node /path/to/billit-mcp/dist/stdio.js
 ```
-
-### Claude Desktop (one-click DXT)
-
-Download `billit-mcp.dxt` from the
-[latest release](https://github.com/eltyBelgium/billit-mcp/releases/latest) and
-double-click — Claude Desktop prompts for your credentials in a form.
-Requires [`uv`](https://docs.astral.sh/uv/).
 
 ### Gemini CLI
 
@@ -118,8 +119,8 @@ Requires [`uv`](https://docs.astral.sh/uv/).
 }
 ```
 
-(Or a stdio entry with `command`/`args` — see the guide. Server name must not
-contain underscores.)
+(Or a stdio entry with `command: "node"`, `args: [".../dist/stdio.js"]` and an
+`env` block. Server name must not contain underscores.)
 
 ### ChatGPT (Developer Mode)
 
@@ -142,10 +143,10 @@ mcp_servers=[{"type": "url", "name": "billit",
 
 ## Deploying & publishing your own instance
 
-### Manual deploy (3 commands)
+### Manual deploy
 
 ```bash
-cd node && npm install
+npm install
 npx wrangler login
 npm run deploy          # → https://billit-mcp.<your-subdomain>.workers.dev
 npx wrangler secret put BILLIT_API_KEY
@@ -161,7 +162,7 @@ Fork this repo, then add two repository secrets
   with the *Edit Cloudflare Workers* template
 - `CLOUDFLARE_ACCOUNT_ID` — shown on your Workers dashboard
 
-Every push to `main` that touches `node/` now auto-deploys
+Every push to `main` that touches the server now auto-deploys
 ([workflow](.github/workflows/deploy-worker.yml)). Without the secrets the
 workflow skips cleanly, so plain forks stay green.
 
@@ -178,39 +179,35 @@ openssl rand -hex 32 | npx wrangler secret put MCP_AUTH_TOKEN
 Clients must then send `Authorization: Bearer <token>` (supported by Claude
 Code `--header`, ChatGPT's API-key connector auth, and both vendor APIs —
 but **not** by claude.ai's connector UI, which needs OAuth or an open
-endpoint). See [`node/README.md`](node/README.md) for details and
-per-client examples.
+endpoint).
 
 ## Development
 
 ```bash
-# Python
-uv sync --extra dev && uv run pytest
-
-# TypeScript
-cd node && npm install && npx tsc --noEmit
-
-# Interactive tool testing (either implementation)
-npx -y @modelcontextprotocol/inspector uv run billit-mcp          # Python
-cd node && npm run inspect                                        # TypeScript
-
-# Worker local dev
-cd node && cp .dev.vars.example .dev.vars && npm run dev          # :8787/mcp
+npm install
+npx tsc --noEmit            # typecheck
+npm run build && npm run smoke   # build stdio + MCP handshake test
+npm run inspect             # MCP Inspector against the stdio server
+cp .dev.vars.example .dev.vars && npm run dev   # local Worker at :8787/mcp
 ```
 
 ## Repository layout
 
 ```
-├── node/                   # TypeScript: stdio + Cloudflare Worker
-│   ├── src/                #   core (config/client/errors) + tools/ + entrypoints
-│   └── wrangler.jsonc      #   Worker config (stateless, no Durable Objects)
-├── src/billit_mcp/         # Python: FastMCP server (stdio + HTTP)
-├── dxt/                    # Claude Desktop one-click bundle (launcher)
-├── docs/
-│   ├── GUIDE.md            # per-client setup + troubleshooting
-│   └── tools.md            # tool reference
-├── tests/                  # Python test suite (mocked Billit API)
-└── .github/workflows/      # CI · PyPI · DXT · Worker deploy
+├── src/
+│   ├── config.ts        # env → config, sandbox default, credential checks
+│   ├── errors.ts        # BillitError + status→hint mapping
+│   ├── client.ts        # fetch client: retries, Idempotent-Key, pagination
+│   ├── server.ts        # buildServer(): McpServer + all tool modules
+│   ├── stdio.ts         # local entrypoint (Claude/Gemini)
+│   ├── worker.ts        # Cloudflare Worker entrypoint (/mcp)
+│   └── tools/           # orders · parties · products · documents · peppol
+│                        # misc (reports/inbox/account) · searchFetch
+├── wrangler.jsonc       # Worker config (stateless — no Durable Objects)
+├── dxt/                 # Claude Desktop one-click bundle assets
+├── docs/                # GUIDE.md (per-client setup) · tools.md (reference)
+├── scripts/smoke.mjs    # CI handshake test
+└── .github/workflows/   # CI · Worker deploy · DXT release
 ```
 
 ## Useful links

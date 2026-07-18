@@ -1,62 +1,23 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
+# Node
+node_modules/
 dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+*.log
 
-# Virtualenvs
-.venv/
-venv/
-env/
-ENV/
+# Wrangler
+.wrangler/
+.dev.vars
 
-# uv
-.python-version
-uv.lock
-
-# Test/coverage
-.pytest_cache/
-.coverage
-.coverage.*
-htmlcov/
-.tox/
-.mypy_cache/
-.ruff_cache/
-.dmypy.json
-coverage.xml
-
-# Secrets
+# Env / secrets
 .env
-.env.local
-.env.*.local
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-.DS_Store
+.env.*
+!.env.example
 
 # DXT build artefacts
 *.dxt
-dxt/server/lib/
+dxt/bundle/
 
-# Logs
-*.log
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+*.swp

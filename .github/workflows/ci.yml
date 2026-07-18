@@ -6,35 +6,31 @@ on:
   pull_request:
 
 jobs:
-  lint-and-test:
+  check:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        node-version: ["20", "22"]
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v3
+      - uses: actions/setup-node@v4
         with:
-          enable-cache: true
-          # No committed uv.lock — key the cache on pyproject.toml instead of
-          # the default **/uv.lock glob (which errors when absent).
-          cache-dependency-glob: "pyproject.toml"
+          node-version: ${{ matrix.node-version }}
+          cache: npm
 
-      - name: Set up Python ${{ matrix.python-version }}
-        run: uv python install ${{ matrix.python-version }}
+      - name: Install
+        run: npm ci
 
-      - name: Sync deps
-        run: uv sync --extra dev
+      - name: Typecheck
+        run: npx tsc --noEmit
 
-      - name: Ruff
-        run: uv run ruff check src tests
+      - name: Build stdio entrypoint
+        run: npm run build
 
-      - name: Mypy
-        run: uv run mypy src
-        continue-on-error: true   # strict mypy is aspirational; don't block PRs yet
+      - name: MCP handshake smoke test
+        run: node scripts/smoke.mjs
 
-      - name: Pytest
-        run: uv run pytest -q
+      - name: Validate Worker bundle
+        run: npx wrangler deploy --dry-run --outdir /tmp/wrangler-check

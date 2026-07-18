@@ -15,12 +15,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: npm
 
-      # The DXT is a thin launcher: it runs `uvx --from git+...@<tag>` at
-      # install time, so uv fetches the right wheels for the user's platform.
-      # Nothing to bundle — no compiled deps baked in, fully cross-platform.
+      - name: Install
+        run: npm ci
+
+      # Self-contained Node bundle: esbuild compiles the stdio server (plus
+      # its pure-JS deps) into one file. Claude Desktop runs it with its own
+      # bundled Node runtime — the user installs nothing.
+      - name: Build server bundle
+        run: |
+          npm run build:dxt
+          cp dxt/manifest.json dxt/icon.png dxt/bundle/
+
       - name: Pack DXT
-        run: npx -y @anthropic-ai/dxt pack ./dxt billit-mcp.dxt
+        run: npx -y @anthropic-ai/dxt pack ./dxt/bundle billit-mcp.dxt
 
       - name: Upload as release asset
         env:

@@ -5,22 +5,14 @@ and **ChatGPT** via the Model Context Protocol.
 
 > [!NOTE]
 > Default base URL is `https://api.sandbox.billit.be`. Real invoices are only
-> created if you set `BILLIT_BASE_URL=https://api.billit.be` **and** pass
-> `--allow-production` on the CLI. Practice in sandbox first.
+> created if you point at `https://api.billit.be` **and** explicitly allow
+> production. Practice in sandbox first.
 
 ## Contents
 
 1. [Get your credentials](#1-get-your-credentials)
-2. [Install the server](#2-install-the-server)
+2. [Run the server](#2-run-the-server)
 3. [Wire it up — per client](#3-wire-it-up--per-client)
-   - [Claude Desktop (DXT one-click)](#claude-desktop-one-click-dxt)
-   - [Claude Desktop (manual JSON)](#claude-desktop-manual-json)
-   - [Claude Code](#claude-code)
-   - [Gemini CLI](#gemini-cli)
-   - [Gemini Code Assist (VS Code)](#gemini-code-assist-vs-code)
-   - [ChatGPT Desktop (Developer Mode)](#chatgpt-desktop-developer-mode)
-   - [OpenAI Responses API](#openai-responses-api)
-   - [Anthropic Messages API (MCP connector)](#anthropic-messages-api-mcp-connector)
 4. [OAuth mode (multi-tenant / commercial)](#4-oauth-mode-multi-tenant--commercial)
 5. [Verify with MCP Inspector](#5-verify-with-mcp-inspector)
 6. [Troubleshooting](#6-troubleshooting)
@@ -35,20 +27,14 @@ and **ChatGPT** via the Model Context Protocol.
 2. Log in → **My Profile**. Copy:
    - `ApiKey` (the long secret)
    - `PartyID` (the integer next to your company)
-3. Repeat at [my.billit.be](https://my.billit.be) to get production credentials
-   when you're ready.
+3. Repeat at [my.billit.be](https://my.billit.be) for production credentials
+   when you're ready. **Sandbox and production credentials are separate.**
 
 ### Distributed / multi-tenant → OAuth
 
-Email `support@billit.eu` with:
-
-- Your sandbox PartyID
-- App name
-- Redirect URI (must not be `localhost`)
-- Environment (sandbox first; production after approval)
-
-You'll receive a `client_id` and `client_secret`. See
-[OAuth mode](#4-oauth-mode-multi-tenant--commercial).
+Email `support@billit.eu` with your sandbox PartyID, app name, redirect URI
+(not `localhost`), and environment. You'll receive a `client_id` and
+`client_secret`. See [OAuth mode](#4-oauth-mode-multi-tenant--commercial).
 
 > [!WARNING]
 > Billit's terms say API-key mode is **personal use only**. If you host the
@@ -56,62 +42,59 @@ You'll receive a `client_id` and `client_secret`. See
 
 ---
 
-## 2. Install the server
+## 2. Run the server
 
-### One-click — Claude Desktop only
-
-Download `billit-mcp.dxt` from [Releases](https://github.com/eltyBelgium/billit-mcp/releases/latest)
-and double-click. Skip to [Claude Desktop (DXT)](#claude-desktop-one-click-dxt).
-
-### One command — everything else
-
-> [!NOTE]
-> The PyPI package `billit-mcp-server` is not published yet. Until it is, install
-> from source (`git clone` + `uv run`, see [Develop in the README](../README.md#develop))
-> or use the `.dxt`. Do **not** `uvx billit-mcp` — that bare name is an unrelated
-> project on PyPI.
+### Option A — Cloudflare Worker (recommended for remote clients)
 
 ```bash
-uvx billit-mcp-server --help   # downloads & runs without polluting your global Python
-# or, persistent install:
-pipx install billit-mcp-server
+npm install
+npx wrangler login                       # once, opens browser
+npm run deploy                           # → https://billit-mcp.<subdomain>.workers.dev
+npx wrangler secret put BILLIT_API_KEY   # paste your key at the prompt
+npx wrangler secret put BILLIT_PARTY_ID
 ```
 
-### Docker — for hosted HTTP
+Check `https://billit-mcp.<subdomain>.workers.dev/` — it returns a JSON
+status with `"configured": true` when the secrets are in place. The MCP
+endpoint is `/mcp`.
+
+To later target production, edit `wrangler.jsonc` → `vars.BILLIT_BASE_URL`
+to `https://api.billit.be`, **secure the endpoint first** (see the README),
+and redeploy.
+
+### Option B — Local stdio (Claude Desktop / Claude Code / Gemini CLI)
 
 ```bash
-docker pull ghcr.io/eltybelgium/billit-mcp:latest
-docker run --rm -p 8000:8000 \
-  -e BILLIT_API_KEY=... -e BILLIT_PARTY_ID=12345 \
-  ghcr.io/eltybelgium/billit-mcp:latest
-# → http://localhost:8000/mcp (Streamable HTTP)
+npm install && npm run build             # → dist/stdio.js
 ```
+
+The server reads env vars:
+
+| Variable | Required | Notes |
+|---|---|---|
+| `BILLIT_API_KEY` | yes | from MyBillit → My Profile |
+| `BILLIT_PARTY_ID` | yes | company context for every call |
+| `BILLIT_BASE_URL` | no | defaults to sandbox |
+| `BILLIT_ALLOW_PRODUCTION` | no | must be `true` to start against production |
+
+### Option C — One-click DXT (Claude Desktop)
+
+Download `billit-mcp.dxt` from the
+[latest release](https://github.com/eltyBelgium/billit-mcp/releases/latest),
+double-click, and fill in the credentials form. Self-contained — Claude
+Desktop runs it with its own Node runtime.
 
 ---
 
 ## 3. Wire it up — per client
 
-### Claude Desktop (one-click DXT)
+### claude.ai / Claude Desktop — remote connector
 
-**Prerequisite:** [`uv`](https://docs.astral.sh/uv/) must be installed — the DXT
-launches the server with `uvx`. Install it with
-`curl -LsSf https://astral.sh/uv/install.sh | sh` (macOS/Linux) or
-`powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"`
-(Windows).
+Settings → **Connectors** → **Add custom connector** → paste
+`https://billit-mcp.<subdomain>.workers.dev/mcp`. Tools appear under the 🔨
+icon in any chat.
 
-1. Download `billit-mcp.dxt`.
-2. Double-click → Claude Desktop pops a form.
-3. Paste **API key** and **PartyID**. Leave **base URL** at sandbox.
-4. Click Install.
-
-The DXT is a thin, cross-platform launcher (it runs
-`uvx --from git+https://github.com/eltyBelgium/billit-mcp@v0.1.0 billit-mcp-server`),
-so the same file works on macOS, Windows, and Linux.
-
-The Billit tools appear under the 🔨 icon in any chat. To toggle to production
-later, open **Settings → Connectors → Billit** and edit the form.
-
-### Claude Desktop (manual JSON)
+### Claude Desktop — manual local JSON
 
 Path:
 
@@ -122,8 +105,8 @@ Path:
 {
   "mcpServers": {
     "billit": {
-      "command": "uvx",
-      "args": ["billit-mcp-server"],
+      "command": "node",
+      "args": ["/ABSOLUTE/PATH/TO/billit-mcp/dist/stdio.js"],
       "env": {
         "BILLIT_API_KEY": "sk_...",
         "BILLIT_PARTY_ID": "12345",
@@ -134,34 +117,33 @@ Path:
 }
 ```
 
-Fully quit Claude Desktop (Cmd-Q on macOS, exit tray on Windows) and reopen.
+Fully quit Claude Desktop (Cmd-Q / exit tray) and reopen.
 
 ### Claude Code
 
-Project-scoped (commit `.mcp.json` at the repo root):
-
 ```bash
+# Remote (Worker)
+claude mcp add --transport http billit https://billit-mcp.<subdomain>.workers.dev/mcp
+
+# Remote with bearer gate (if MCP_AUTH_TOKEN is set on the Worker)
+claude mcp add --transport http billit https://billit-mcp.<subdomain>.workers.dev/mcp \
+  --header "Authorization: Bearer <token>"
+
+# Local stdio
 claude mcp add --transport stdio \
   --env BILLIT_API_KEY=sk_... \
   --env BILLIT_PARTY_ID=12345 \
-  --env BILLIT_BASE_URL=https://api.sandbox.billit.be \
-  billit -- uvx billit-mcp-server
+  billit -- node /path/to/billit-mcp/dist/stdio.js
 ```
 
-Or check `.mcp.json` into git so teammates get it for free:
+Or commit `.mcp.json` at a project root so teammates get it for free:
 
 ```json
 {
   "mcpServers": {
     "billit": {
-      "type": "stdio",
-      "command": "uvx",
-      "args": ["billit-mcp-server"],
-      "env": {
-        "BILLIT_API_KEY": "${BILLIT_API_KEY}",
-        "BILLIT_PARTY_ID": "${BILLIT_PARTY_ID:-12345}",
-        "BILLIT_BASE_URL": "${BILLIT_BASE_URL:-https://api.sandbox.billit.be}"
-      }
+      "type": "http",
+      "url": "https://billit-mcp.<subdomain>.workers.dev/mcp"
     }
   }
 }
@@ -169,108 +151,76 @@ Or check `.mcp.json` into git so teammates get it for free:
 
 ### Gemini CLI
 
-Path: `~/.gemini/settings.json` (global) or `.gemini/settings.json` in a project.
+`~/.gemini/settings.json` (global) or `.gemini/settings.json` per project:
 
 ```json
 {
   "mcpServers": {
     "billit": {
-      "command": "uvx",
-      "args": ["billit-mcp-server"],
+      "httpUrl": "https://billit-mcp.<subdomain>.workers.dev/mcp",
+      "timeout": 30000
+    }
+  }
+}
+```
+
+Local stdio variant:
+
+```json
+{
+  "mcpServers": {
+    "billit": {
+      "command": "node",
+      "args": ["/path/to/billit-mcp/dist/stdio.js"],
       "env": {
         "BILLIT_API_KEY": "$BILLIT_API_KEY",
-        "BILLIT_PARTY_ID": "12345",
-        "BILLIT_BASE_URL": "https://api.sandbox.billit.be"
-      },
-      "timeout": 30000,
-      "trust": false
+        "BILLIT_PARTY_ID": "12345"
+      }
     }
   }
 }
 ```
 
 > [!IMPORTANT]
-> Server name **cannot contain underscores** — Gemini parses tools as
-> `mcp_{server}_{tool}`. Use `billit`, not `billit_mcp`.
+> Gemini exposes tools as `mcp_{server}_{tool}` and parses on underscores —
+> the server name **cannot contain underscores**. Use `billit`. Note that
+> Gemini strips `*KEY*`/`*TOKEN*`-pattern env vars from the inherited
+> environment; re-declare them under `env`.
 
-Verify with `gemini mcp list` then `/mcp` inside the CLI.
+Verify with `gemini mcp list` then `/mcp` inside the CLI. Gemini Code Assist
+(VS Code, Standard/Enterprise tier) reads the same settings file.
 
-### Gemini Code Assist (VS Code)
+### ChatGPT (Developer Mode)
 
-Gemini Code Assist reads the same `~/.gemini/settings.json` as the CLI in
-agent mode. Requires Standard or Enterprise tier (free tier dropped MCP
-support in June 2026).
+1. **Settings → Apps & Connectors → Advanced → enable Developer Mode**
+   (Plus/Pro/Business/Enterprise).
+2. **Settings → Connectors → Add custom connector** →
+   `https://billit-mcp.<subdomain>.workers.dev/mcp`.
+3. Pick **No auth** (open endpoint) or **API key** (sends
+   `Authorization: Bearer …` — pair with `MCP_AUTH_TOKEN` on the Worker).
 
-### ChatGPT Desktop (Developer Mode)
-
-ChatGPT only consumes MCP over **public HTTPS** — it can't spawn a local
-process. Two paths:
-
-#### Local dev with a tunnel
-
-```bash
-# Terminal 1 — start the server in HTTP mode
-BILLIT_API_KEY=... BILLIT_PARTY_ID=12345 \
-  uvx billit-mcp-server --transport http --port 8000
-
-# Terminal 2 — expose it publicly
-cloudflared tunnel --url http://localhost:8000
-# → https://random-words.trycloudflare.com
-```
-
-#### Production hosting
-
-```bash
-docker run -d --restart unless-stopped -p 8000:8000 \
-  -e BILLIT_API_KEY=... -e BILLIT_PARTY_ID=12345 \
-  --name billit-mcp ghcr.io/eltybelgium/billit-mcp:latest
-# Front with a TLS-terminating reverse proxy (Caddy / nginx / Traefik).
-```
-
-Then in ChatGPT:
-
-1. **Settings → Apps & Connectors → Advanced → enable Developer Mode**.
-   (Plus, Pro, Business, or Enterprise tier required.)
-2. **Settings → Connectors → Add custom connector**.
-3. URL: `https://your-host/mcp`. Pick **OAuth** or **API key** as the auth
-   mode you implemented.
-4. Complete the auth flow. Tools appear in any chat.
-
-> [!NOTE]
-> For full Deep Research compatibility, ChatGPT looks for the `search` and
-> `fetch` tools — this server ships both out of the box.
+ChatGPT requires a **public HTTPS** URL — it cannot spawn local processes.
+The `search`/`fetch` tools ChatGPT expects for Deep Research ship built-in.
 
 ### OpenAI Responses API
 
 ```python
-from openai import OpenAI
-
-client = OpenAI()
 resp = client.responses.create(
     model="gpt-5",
     input="What invoices are unpaid past their due date?",
     tools=[{
         "type": "mcp",
         "server_label": "billit",
-        "server_url": "https://your-host/mcp",
-        "authorization": f"Bearer {billit_oauth_token}",  # or omit for apikey mode
+        "server_url": "https://billit-mcp.<subdomain>.workers.dev/mcp",
+        "authorization": "Bearer <MCP_AUTH_TOKEN>",   # only if you set the gate
         "require_approval": "never",
-        "allowed_tools": ["list_orders", "get_order"],
     }],
 )
-print(resp.output_text)
 ```
-
-The Responses API runs the MCP client from OpenAI's edge — your server must be
-on public HTTPS. Headers (including `authorization`) are stripped from logs but
-must be re-sent on every call.
 
 ### Anthropic Messages API (MCP connector)
 
 ```python
-import anthropic
-
-client = anthropic.Anthropic()
 resp = client.messages.create(
     model="claude-opus-4-8",
     max_tokens=1024,
@@ -279,66 +229,55 @@ resp = client.messages.create(
     extra_body={
         "mcp_servers": [{
             "type": "url",
-            "url": "https://your-host/mcp",
+            "url": "https://billit-mcp.<subdomain>.workers.dev/mcp",
             "name": "billit",
-            "authorization_token": billit_oauth_token,
         }],
-        "tools": [{
-            "type": "mcp_toolset",
-            "mcp_server_name": "billit",
-            "default_config": {"enabled": True},
-        }],
+        "tools": [{"type": "mcp_toolset", "mcp_server_name": "billit",
+                   "default_config": {"enabled": True}}],
     },
 )
 ```
 
-Available on the Anthropic API and AWS Foundry. **Not** on Bedrock or Vertex.
+Available on the Anthropic API and AWS Foundry — not Bedrock or Vertex.
 
 ---
 
 ## 4. OAuth mode (multi-tenant / commercial)
 
-When the MCP server is shared by multiple users — hosted on the public
-internet, or used inside an organization — switch from `apikey` to `oauth`:
+When the server is shared by multiple users, Billit requires OAuth. The
+authorization-code dance happens outside this server — your app sends the
+user to:
+
+```
+https://my.billit.be/Account/Logon?client_id=<id>&redirect_uri=<cb>&state=<csrf>
+```
+
+then exchanges the code at `/OAuth2/token` for an access token (1 h TTL) and
+a **single-use** refresh token — store the new refresh token on every
+refresh. Run the server with:
 
 ```bash
-export BILLIT_AUTH_MODE=oauth
-export BILLIT_OAUTH_CLIENT_ID=...
-export BILLIT_OAUTH_CLIENT_SECRET=...
-export BILLIT_OAUTH_REFRESH_TOKEN=...
+BILLIT_AUTH_MODE=bearer BILLIT_OAUTH_ACCESS_TOKEN=<token> node dist/stdio.js
 ```
 
-The authorization-code dance happens **outside** this MCP server — your app
-shepherds the user to:
-
-```
-https://my.billit.be/Account/Logon
-  ?client_id=<id>
-  &redirect_uri=<your-callback>
-  &state=<csrf>
-```
-
-Then POSTs the returned code to `/OAuth2/token` to receive an access token
-(1 h TTL) plus a refresh token. **Refresh tokens are single-use** — store the
-new one each time. This MCP rotates them automatically and logs the new value
-at INFO level; persist it in your secret store.
+Token refresh management is up to your surrounding app for now.
 
 ---
 
 ## 5. Verify with MCP Inspector
 
 ```bash
-npx -y @modelcontextprotocol/inspector \
-  uvx billit-mcp-server
+npm run inspect
 ```
 
-A browser opens at <http://localhost:6274>. Try:
+A browser opens. Try:
 
 - `get_account_info` — confirms auth + base URL.
 - `lookup_peppol_participant` with `BE0563846944` — works even without auth.
 - `list_orders` with `top=5`.
 
-If those return data you're good to wire into a client.
+For the deployed Worker: `curl https://billit-mcp.<subdomain>.workers.dev/`
+should report `"configured": true`.
 
 ---
 
@@ -346,19 +285,18 @@ If those return data you're good to wire into a client.
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| Hammer 🔨 icon missing in Claude Desktop | JSON syntax error or non-absolute path | Validate the JSON; use absolute paths for `command` if `uvx` isn't on PATH |
-| `spawn ENOENT` on Windows | npm/uvx not on PATH | Install `uv` globally; restart Claude Desktop after install |
-| `401 Auth failed` from any tool | `apikey` + `partyID` mismatch with `BILLIT_BASE_URL` | Sandbox creds ≠ production creds. Double-check which environment you're hitting |
-| ChatGPT: "Unsafe URL" | You pointed it at `localhost` | Tunnel via Cloudflare/ngrok or host on public HTTPS |
-| Gemini doesn't see tools | Underscore in server name, or `*KEY*`-pattern env vars stripped | Rename `billit_mcp` → `billit`. Re-declare API key under `env` in settings.json |
-| `400 Bad Request` from Claude Code on tool registration | Top-level `oneOf`/`anyOf` in input schema | This server avoids those by design; report the tool if you see it |
-| `delete_order` returns success but order still listed | Soft delete — still visible via `list_deleted_orders` | Working as designed |
-| Production refused to start | Safety: production needs `--allow-production` | Pass the CLI flag explicitly when you're sure |
-| OAuth refresh fails after rotation | Refresh token already used | Persist the new refresh token logged at INFO each refresh |
+| Hammer 🔨 icon missing in Claude Desktop | JSON syntax error or non-absolute path | Validate the JSON; use an absolute path to `dist/stdio.js` |
+| `401 ApiKeyNotValid` | Wrong environment or whitespace in the pasted secret | Sandbox creds ≠ production creds. Re-run `wrangler secret put` and paste carefully |
+| ChatGPT: "Unsafe URL" | Pointing it at `localhost` | Deploy the Worker (or tunnel) — ChatGPT needs public HTTPS |
+| Gemini doesn't see tools | Underscore in server name, or env vars stripped | Rename to `billit`; re-declare `*KEY*` vars under `env` |
+| Worker returns `server_not_configured` | Secrets not set | `npx wrangler secret put BILLIT_API_KEY` / `BILLIT_PARTY_ID` |
+| Server refuses to start locally | Production URL without opt-in | Pass `--allow-production` or `BILLIT_ALLOW_PRODUCTION=true` |
+| `delete_order` succeeded but order still listed | Soft delete | It's in `list_deleted_orders` — working as designed |
 
-For anything else, check the server logs:
+Logs:
 
-- **Claude Desktop** — `~/Library/Logs/Claude/mcp-server-billit.log` (macOS)
-  or `%APPDATA%\Claude\logs\mcp-server-billit.log` (Windows).
-- **Claude Code** — run with `--debug` to see MCP frames inline.
-- **Direct** — set `LOG_LEVEL=DEBUG` and run the server in a terminal.
+- **Worker** — `npx wrangler tail`
+- **Claude Desktop (local stdio)** — `~/Library/Logs/Claude/mcp-server-billit.log`
+  (macOS) or `%APPDATA%\Claude\logs\` (Windows)
+- **Anywhere** — the server logs to stderr; run `node dist/stdio.js` in a
+  terminal to see startup errors directly
