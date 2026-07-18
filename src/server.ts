@@ -13,7 +13,7 @@ import * as peppol from "./tools/peppol.js";
 import * as products from "./tools/products.js";
 import * as searchFetch from "./tools/searchFetch.js";
 
-export const VERSION = "0.1.0";
+export const VERSION = "0.2.0";
 
 const INSTRUCTIONS = `\
 Billit MCP — manage Belgian e-invoices (Orders), customers/suppliers (Parties),
