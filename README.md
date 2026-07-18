@@ -169,17 +169,50 @@ workflow skips cleanly, so plain forks stay green.
 ### Securing a public endpoint
 
 An unauthenticated Worker exposes *your* Billit account to anyone with the
-URL. Acceptable for sandbox experiments; **not for production**. Cheapest
-gate — a shared bearer token:
+URL. Acceptable for sandbox experiments; **not for production**.
+
+#### Recommended: Cloudflare Access (Zero Trust)
+
+Put the Worker's hostname behind [Cloudflare Access](https://one.dash.cloudflare.com)
+(free for up to 50 users). Unauthenticated requests then get a 302 to your
+Access login before they ever reach the Worker — no code changes.
+
+Headless MCP clients authenticate with an Access **service token**:
+
+1. Zero Trust dashboard → **Access → Service auth → Service tokens →
+   Create service token**. Copy the Client ID + Secret (shown once).
+2. Edit your Access application for the Worker hostname → **Add a policy**
+   with action **Service Auth** (not *Allow*) → include → **Service Token**.
+3. Clients send two headers on every request:
+
+   ```bash
+   # Claude Code
+   claude mcp add --transport http billit https://billit-mcp.<sub>.workers.dev/mcp \
+     --header "CF-Access-Client-Id: <CLIENT_ID>.access" \
+     --header "CF-Access-Client-Secret: <CLIENT_SECRET>"
+   ```
+
+   The same headers work in Gemini CLI (`"headers": {...}`), the OpenAI
+   Responses API, and the Anthropic Messages API.
+
+> [!NOTE]
+> claude.ai's connector UI cannot send custom headers. To use claude.ai
+> against an Access-protected server you need the OAuth route: the Worker
+> implements MCP's OAuth flow with Access as OIDC identity provider
+> (Cloudflare's [`workers-oauth-provider`](https://github.com/cloudflare/workers-oauth-provider)
+> + [Access for SaaS](https://developers.cloudflare.com/cloudflare-one/access-controls/ai-controls/secure-mcp-servers/)).
+> Users then log in through your Access page when adding the connector.
+
+#### Alternative: shared bearer token (no Access)
 
 ```bash
 openssl rand -hex 32 | npx wrangler secret put MCP_AUTH_TOKEN
 ```
 
-Clients must then send `Authorization: Bearer <token>` (supported by Claude
-Code `--header`, ChatGPT's API-key connector auth, and both vendor APIs —
-but **not** by claude.ai's connector UI, which needs OAuth or an open
-endpoint).
+The Worker then requires `Authorization: Bearer <token>` on `/mcp` —
+supported by Claude Code `--header`, ChatGPT's API-key connector auth, and
+both vendor APIs, but not by claude.ai's connector UI. Skip this if you use
+Access; it would be redundant.
 
 ## Development
 

@@ -290,6 +290,7 @@ should report `"configured": true`.
 | ChatGPT: "Unsafe URL" | Pointing it at `localhost` | Deploy the Worker (or tunnel) — ChatGPT needs public HTTPS |
 | Gemini doesn't see tools | Underscore in server name, or env vars stripped | Rename to `billit`; re-declare `*KEY*` vars under `env` |
 | Worker returns `server_not_configured` | Secrets not set | `npx wrangler secret put BILLIT_API_KEY` / `BILLIT_PARTY_ID` |
+| Requests get a 302 to `*.cloudflareaccess.com` | Worker is behind Cloudflare Access | Send `CF-Access-Client-Id`/`CF-Access-Client-Secret` service-token headers, or use the Access-OIDC OAuth route for claude.ai — see the README's "Securing a public endpoint" |
 | Server refuses to start locally | Production URL without opt-in | Pass `--allow-production` or `BILLIT_ALLOW_PRODUCTION=true` |
 | `delete_order` succeeded but order still listed | Soft delete | It's in `list_deleted_orders` — working as designed |
 
