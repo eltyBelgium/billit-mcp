@@ -1,7 +1,8 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
+  // No account_id here on purpose — this is a public template. Wrangler uses
+  // your logged-in account (or CLOUDFLARE_ACCOUNT_ID in CI).
   "name": "billit-mcp",
-  "account_id": "53b85265ddbc7e2c1f311632208dd201",
   "main": "src/worker.ts",
   "compatibility_date": "2026-01-01",
   "compatibility_flags": ["nodejs_compat"],
