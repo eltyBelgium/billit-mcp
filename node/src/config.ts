@@ -27,11 +27,13 @@ export function configFromEnv(env: EnvLike): BillitConfig {
   const baseUrl = (env.BILLIT_BASE_URL ?? SANDBOX_BASE_URL).replace(/\/+$/, "");
   const authMode: AuthMode = env.BILLIT_AUTH_MODE === "bearer" ? "bearer" : "apikey";
   return {
-    apiKey: env.BILLIT_API_KEY,
-    partyId: env.BILLIT_PARTY_ID,
+    // trim(): pasted secrets often carry a stray trailing newline/space,
+    // which Billit rejects as an invalid key.
+    apiKey: env.BILLIT_API_KEY?.trim(),
+    partyId: env.BILLIT_PARTY_ID?.trim(),
     baseUrl,
     authMode,
-    bearerToken: env.BILLIT_OAUTH_ACCESS_TOKEN ?? env.BILLIT_BEARER_TOKEN,
+    bearerToken: (env.BILLIT_OAUTH_ACCESS_TOKEN ?? env.BILLIT_BEARER_TOKEN)?.trim(),
     timeoutMs: Number(env.BILLIT_TIMEOUT_MS ?? 30000),
     maxRetries: Number(env.BILLIT_MAX_RETRIES ?? 3),
   };
