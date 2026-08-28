@@ -169,9 +169,11 @@ workflow skips cleanly, so plain forks stay green.
 ### Securing a public endpoint
 
 An unauthenticated Worker exposes *your* Billit account to anyone with the
-URL. Acceptable for sandbox experiments; **not for production**.
+URL. Acceptable for sandbox experiments; **not for production**. There are
+three ways to lock it down, depending on who's connecting and whether
+Billit's personal-use terms even allow a shared key.
 
-#### Recommended: Cloudflare Access (Zero Trust)
+#### You're the only user: Cloudflare Access (Zero Trust)
 
 Put the Worker's hostname behind [Cloudflare Access](https://one.dash.cloudflare.com)
 (free for up to 50 users). Unauthenticated requests then get a 302 to your
@@ -196,12 +198,11 @@ Headless MCP clients authenticate with an Access **service token**:
    Responses API, and the Anthropic Messages API.
 
 > [!NOTE]
-> claude.ai's connector UI cannot send custom headers. To use claude.ai
-> against an Access-protected server you need the OAuth route: the Worker
-> implements MCP's OAuth flow with Access as OIDC identity provider
-> (Cloudflare's [`workers-oauth-provider`](https://github.com/cloudflare/workers-oauth-provider)
-> + [Access for SaaS](https://developers.cloudflare.com/cloudflare-one/access-controls/ai-controls/secure-mcp-servers/)).
-> Users then log in through your Access page when adding the connector.
+> claude.ai's connector UI generally can't send these two custom headers
+> (request-header auth is a beta feature gated per organization, and even
+> where enabled, arbitrary header names need Anthropic's approval). Access
+> this way from Claude Code, Gemini CLI, or the vendor APIs; for claude.ai
+> itself, use one of the two options below instead.
 
 #### Alternative: shared bearer token (no Access)
 
@@ -209,10 +210,26 @@ Headless MCP clients authenticate with an Access **service token**:
 openssl rand -hex 32 | npx wrangler secret put MCP_AUTH_TOKEN
 ```
 
-The Worker then requires `Authorization: Bearer <token>` on `/mcp` —
-supported by Claude Code `--header`, ChatGPT's API-key connector auth, and
-both vendor APIs, but not by claude.ai's connector UI. Skip this if you use
-Access; it would be redundant.
+The Worker then requires `Authorization: Bearer <token>` on `/mcp` — this is
+one of claude.ai's pre-approved request-header names, so it works there too
+if your organization has the request-headers beta; also supported by Claude
+Code `--header`, ChatGPT's API-key connector auth, and both vendor APIs.
+Skip this if you use Access; it would be redundant. Either way, this is
+still a **single shared secret for everyone who has it** — fine for your own
+team, not for a public template others self-serve into.
+
+#### Multiple users, each with their own Billit account: OAuth
+
+Billit's terms only allow API-key auth for **personal, non-commercial use**.
+The moment you host this for other people, Billit requires each of them to
+log into *their own* Billit account — no shared key at all. That's a
+separate deploy target, `src/worker-oauth.ts`, built with Cloudflare's
+[`workers-oauth-provider`](https://github.com/cloudflare/workers-oauth-provider)
+acting as an MCP OAuth server that federates to Billit's own OAuth login for
+each connection. It's compatible with claude.ai's normal OAuth connector
+flow — no headers needed. See [OAuth mode](docs/GUIDE.md#4-oauth-mode-multi-tenant--commercial)
+in the guide for the full setup (getting a client ID/secret from Billit
+support, provisioning KV, and `npm run deploy:oauth`).
 
 ## Development
 

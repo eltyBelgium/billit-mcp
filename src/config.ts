@@ -9,6 +9,13 @@
 export const SANDBOX_BASE_URL = "https://api.sandbox.billit.be";
 export const PRODUCTION_BASE_URL = "https://api.billit.be";
 
+// Billit's OAuth login/token host, mirroring the api.*/api.sandbox.* split
+// above. Inferred from that pattern, not yet confirmed against Billit's own
+// OAuth docs — verify with support@billit.eu before relying on the sandbox
+// host in production.
+export const SANDBOX_OAUTH_BASE_URL = "https://my.sandbox.billit.be";
+export const PRODUCTION_OAUTH_BASE_URL = "https://my.billit.be";
+
 export type AuthMode = "apikey" | "bearer";
 
 export interface BillitConfig {
@@ -41,6 +48,11 @@ export function configFromEnv(env: EnvLike): BillitConfig {
 
 export function isProduction(cfg: BillitConfig): boolean {
   return cfg.baseUrl === PRODUCTION_BASE_URL;
+}
+
+/** Billit's OAuth login/token host for the same environment as `cfg.baseUrl`. */
+export function oauthBaseUrlFor(cfg: BillitConfig): string {
+  return isProduction(cfg) ? PRODUCTION_OAUTH_BASE_URL : SANDBOX_OAUTH_BASE_URL;
 }
 
 /** Throws a helpful error if required credentials are missing. */
