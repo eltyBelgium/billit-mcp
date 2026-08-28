@@ -251,15 +251,21 @@ Available on the Anthropic API and AWS Foundry — not Bedrock or Vertex.
 
 ## 4. OAuth mode (multi-tenant / commercial)
 
-When the server is shared by multiple users, Billit requires OAuth. The
-authorization-code dance happens outside this server — your app sends the
-user to:
+When the server is shared by multiple users, Billit requires OAuth: each
+connecting user logs into *their own* Billit account instead of the server
+using one shared API key. There are two ways to run this, depending on the
+client.
+
+### A single client you control: manual token
+
+Point one app at a token you obtained yourself. The authorization-code dance
+happens outside this server — send the user to:
 
 ```
 https://my.billit.be/Account/Logon?client_id=<id>&redirect_uri=<cb>&state=<csrf>
 ```
 
-then exchanges the code at `/OAuth2/token` for an access token (1 h TTL) and
+then exchange the code at `/OAuth2/token` for an access token (1 h TTL) and
 a **single-use** refresh token — store the new refresh token on every
 refresh. Run the server with:
 
@@ -267,7 +273,63 @@ refresh. Run the server with:
 BILLIT_AUTH_MODE=bearer BILLIT_OAUTH_ACCESS_TOKEN=<token> node dist/stdio.js
 ```
 
-Token refresh management is up to your surrounding app for now.
+Token refresh management is up to your surrounding app.
+
+### Multiple, unknown users (e.g. a public claude.ai connector): `src/worker-oauth.ts`
+
+For a Worker that people self-serve into — like adding it as a custom
+connector in claude.ai — the server itself needs to run the OAuth dance per
+connection and keep each person's tokens separate. This repo ships that as a
+**separate** deploy target from the simple `wrangler.jsonc`/`src/worker.ts`,
+so personal single-key deployments are unaffected.
+
+It's built on Cloudflare's [`workers-oauth-provider`](https://github.com/cloudflare/workers-oauth-provider):
+the Worker acts as an MCP OAuth authorization server, and its `/authorize`
+handler redirects to Billit's own login instead of showing its own
+consent screen. Billit's login *is* the consent step. On `/callback` the
+code is exchanged and the resulting Billit token pair is stored in a
+`BILLIT_TOKENS` KV entry, keyed by a random id that's the *only* thing
+placed in the MCP grant's `props` — the tokens themselves are never baked
+into a long-lived grant record. Every `/mcp` request resolves that id back
+to a live access token, refreshing it first if it's within 60s of expiring
+(see `src/billit-oauth.ts` for the refresh-race handling forced by Billit's
+single-use refresh tokens).
+
+Setup:
+
+1. **Get credentials from Billit.** Email `support@billit.eu` with your
+   sandbox PartyID, app name, environment, and the redirect URI
+   `https://billit-mcp.<your-subdomain>.workers.dev/callback` (must match
+   the hostname of the Worker you're deploying this to — **not**
+   `localhost`). They reply with a `client_id`/`client_secret`.
+2. **Provision KV** (once):
+   ```bash
+   npx wrangler kv namespace create OAUTH_KV        # workers-oauth-provider's own storage
+   npx wrangler kv namespace create BILLIT_TOKENS   # per-connection Billit token pairs
+   ```
+   Copy both ids into the `kv_namespaces` block of `wrangler.oauth.jsonc`.
+3. **Set secrets:**
+   ```bash
+   npx wrangler secret put BILLIT_OAUTH_CLIENT_ID -c wrangler.oauth.jsonc
+   npx wrangler secret put BILLIT_OAUTH_CLIENT_SECRET -c wrangler.oauth.jsonc
+   ```
+4. **Deploy:**
+   ```bash
+   npm run deploy:oauth
+   ```
+   This uses the **same Worker name** as `wrangler.jsonc`, so it replaces
+   whatever's currently live at that hostname — don't run it until step 3
+   is done, or `/authorize` will fail for every user.
+5. Add the connector in claude.ai as a normal OAuth connector (no headers):
+   Settings → **Connectors** → **Add custom connector** →
+   `https://billit-mcp.<your-subdomain>.workers.dev/mcp`.
+
+Known limitation: each Billit login mints a fresh grant rather than being
+recognized as "the same person logging in again" — the callback doesn't yet
+fetch a stable Billit account identifier to key off of (that needs an extra
+`account/accountInformation` call whose partyID-scoping under an OAuth token
+isn't confirmed yet). Not a security issue, just means repeat logins from
+the same person show up as separate connector grants.
 
 ---
 

@@ -1,0 +1,36 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Multi-tenant variant of wrangler.jsonc: every connecting user logs into
+  // their OWN Billit account via OAuth (src/worker-oauth.ts) instead of the
+  // server using one shared API key. Required by Billit's terms once you
+  // host this for people other than yourself — see docs/GUIDE.md §4.
+  //
+  // Same worker `name` as wrangler.jsonc on purpose: deploying THIS config
+  // takes over the SAME hostname (billit-mcp.<subdomain>.workers.dev) and
+  // REPLACES the running single-tenant script in place. Don't run
+  // `npm run deploy:oauth` until BILLIT_OAUTH_CLIENT_ID/SECRET are set —
+  // until then, /authorize will fail for every user.
+  "name": "billit-mcp",
+  "main": "src/worker-oauth.ts",
+  "compatibility_date": "2026-01-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "kv_namespaces": [
+    // Owned by @cloudflare/workers-oauth-provider: grants, registered MCP
+    // clients, and this Worker's own issued tokens. Binding name is fixed —
+    // the library looks for `OAUTH_KV` specifically.
+    { "binding": "OAUTH_KV", "id": "20f6af82d51843d494542bdf141b5a59" },
+    // Ours: per-connection Billit access/refresh token pairs, keyed by a
+    // random id stored in the MCP grant's props (never the tokens
+    // themselves — see src/billit-oauth.ts).
+    { "binding": "BILLIT_TOKENS", "id": "c23c1ef767d34b7cab7b50f47b7523a8" }
+  ],
+  // Secrets (set with `wrangler secret put <NAME> -c wrangler.oauth.jsonc`),
+  // NOT committed: BILLIT_OAUTH_CLIENT_ID, BILLIT_OAUTH_CLIENT_SECRET
+  // (from support@billit.eu — see docs/GUIDE.md §4).
+  "vars": {
+    "BILLIT_BASE_URL": "https://api.sandbox.billit.be"
+  }
+}
