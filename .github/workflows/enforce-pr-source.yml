@@ -1,0 +1,20 @@
+name: Enforce PR source branch
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  pr-from-dev:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify PR originates from dev
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+        run: |
+          if [ "$HEAD_REPO" != "${{ github.repository }}" ] || [ "$HEAD_REF" != "dev" ]; then
+            echo "::error::Pull requests into main are only allowed from the dev branch of this repository (got $HEAD_REPO:$HEAD_REF)."
+            exit 1
+          fi
+          echo "PR comes from dev — OK."
